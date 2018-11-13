@@ -238,7 +238,7 @@ $ sudo service apache2 restart
 
 
 
-**Enjoy your application by accessing directly to the IP address of your droplet (mine is listed at the very beginning)**
+**Enjoy your application by accessing directly to the IP address of your droplet (mine is listed at the very beginning) in your browser.**
 
 *Note: Unlike the application which was accessed locally, the deployed application (or more specifically the `catalog` back end database) is not populated beforehand with any genre, album or songs --> it is completely clean and free to be filled!*
 
