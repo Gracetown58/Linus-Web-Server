@@ -160,6 +160,11 @@ to
 ```
 app.run()
 ```
+And **give the absolute path of the client_json file when defining the CLIENT_ID variable (file wasn't found otherwise!):**
+```
+CLIENT_ID = json.loads(
+    open('/var/www/catalog/catalog/client_secrets.json', 'r').read())['web']['client_id']
+```
 4. Edit `database_setup.py`, change the engine creation statement to:  
 `engine = create_engine('postgresql://catalog:catalog@localhost/catalog')`
 5. Add your server's IP address to your  authorized origins in your OAuth client ID settings (I use the [Google API](https://console.developers.google.com/))
@@ -226,18 +231,21 @@ from catalog import app as application
 application.secret_key = 'Add your secret key'
 ```
 - Restart Apache: `sudo service apache2 restart`
-
+```
 $ sudo a2dissite 000-default.conf
 $ sudo service apache2 restart
+```
 
 
+*Note: Unlike the application which was accessed locally, the deployed application (or more specifically the `catalog` back end database) is not populated beforehand with any genre, album or songs --> it is completely clean and free to be filled!*
 
-
-
-
-
-
-
-[intial server set up digital ocean ink](https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04?utm_source=local&utm_medium=Email_Internal&utm_campaign=Email_UbuntuDistroNginxWelcome&mkt_tok=eyJpIjoiTXpZNE5EaGpOR0ZoT1dFeiIsInQiOiIzc2ZXZVlHanE3Sk85ZWpmaEN3cUJSa21ZNlkwUGJJMVBZMkVkZHVmQTNZSzczUTdEYnpTYStTNWpaajg0MGJ3SUhHTlVSTlR3OGY5RzBhVlVBem5lRmp0WHJkdURHZmNuN0JHeTR3c2s0TjAxUlZcL043UDNXS3RIbndITTQwTFMifQ%3D%3D)
-
-https://www.digitalocean.com/community/tutorials/how-to-secure-postgresql-on-an-ubuntu-vps
+# Resources
+- [Application](https://github.com/Gry0u/vinyls_catalogue) written in [Python 2.7](https://www.python.org/), leverages the[ Flask](http://flask.pocoo.org/) microframework.
+- Back-end built using the [PostgreSQL](https://www.postgresql.org/) database system together with the [SQLAlchemy](https://www.postgresql.org/) Python toolkit
+- Application deployed on a Linux Server hosted on a [Digital Ocean](https://www.digitalocean.com/) droplet, using an [Apache](https://httpd.apache.org/) server.
+## Tutorial and guides
+[How to Create a Droplet from the DigitalOcean Control Panel](https://www.digitalocean.com/docs/droplets/how-to/create/)  
+[Connect with SSH](https://www.digitalocean.com/docs/droplets/how-to/connect-with-ssh/)  
+[Initial Server Setup with Ubuntu 18.04](https://www.digitalocean.com/community/tutorials/initial-server-setup-with-ubuntu-18-04)  
+[How To Deploy a Flask Application on an Ubuntu VPS](https://www.digitalocean.com/community/tutorials/how-to-deploy-a-flask-application-on-an-ubuntu-vps)
+[How To Secure PostgreSQL on an Ubuntu VPS](https://www.digitalocean.com/community/tutorials/how-to-secure-postgresql-on-an-ubuntu-vps)
