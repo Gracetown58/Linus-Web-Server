@@ -1,8 +1,8 @@
 # Linux Server Configuration
 This page explains how to set up a secure linux web server using a Digital
-Ocean droplet. This server will then be used to deploy my vinyls catalogue
-previously developed.  
-The address of the server I deployed is http://104.248.253.240/
+Ocean droplet. This server will then be used to deploy the [vinyls catalogue](https://github.com/Gry0u/vinyls_catalogue)
+I previously developed.  
+The address of the server I deployed is **http://104.248.253.240/**
 ## 1. Create the Digital Ocean Droplet
 1. On your local machine create RSA key pairs with the following command:  
 ```
@@ -38,7 +38,7 @@ $ rsync --archive --chown=username:username ~/.ssh /home/username
 ```
 $ nano /etc/ssh/sshd_config
 ```
-Replace `#port 22` by `port 2200`.
+Replace `#port 22` by `port 2200`.  
 7. Restart:
 ```
 service ssh restart
@@ -60,7 +60,7 @@ $ sudo ufw deny 22                # close this port as it was replaced by 2200
 $ sudo ufw enable
 $ sudo ufw status                 # should list all the rules you just set up
 ```  
-11. Disable root login  
+11. Disable root login:
 ```
 $ sudo nano /etc/ssh/sshd_config
 ```  
@@ -69,7 +69,7 @@ Replace `PermitRootLogin yes` by `PermitRootLogin no`.
 $ service ssh restart  
 $ ssh -i /path/to/private/sshkey root@ip.ad.dr.ess -p 2200
 ```
-Should not work anymore.
+Should not work anymore.  
 12. Configure Timezone to Use UTC  
 ```
 sudo dpkg-reconfigure tzdata
@@ -132,7 +132,7 @@ You can check with `\du` that the catalog user has been created.
 $ sudo adduser catalog
 $ sudo usermod -aG sudo catalog
 ```
-- Log as catalog and create catalog database:
+- Log as `catalog` user and create the `catalog` database:
 ```
 $ su - catalog
 $ createdb catalogue
@@ -150,7 +150,7 @@ $ sudo mkdir /var/www/catalog && cd /var/ww/catalog/
 ```
 $ sudo git clone https://github.com/Gry0u/vinyls_catalogue.git catalog
 ```
-3. Rename and edit `views.py`
+3. Rename and edit `views.py`  
 Change
 ```
 app.debug = True
@@ -160,7 +160,7 @@ to
 ```
 app.run()
 ```
-And **give the absolute path of the client_json file when defining the CLIENT_ID variable (file wasn't found otherwise!):**
+And **give the absolute path of the client_json file when defining the CLIENT_ID variable (file isn't found otherwise!):**
 ```
 CLIENT_ID = json.loads(
     open('/var/www/catalog/catalog/client_secrets.json', 'r').read())['web']['client_id']
@@ -236,6 +236,9 @@ $ sudo a2dissite 000-default.conf
 $ sudo service apache2 restart
 ```
 
+
+
+**Enjoy your application by accessing directly to the IP address of your droplet (mine is listed at the very beginning)**
 
 *Note: Unlike the application which was accessed locally, the deployed application (or more specifically the `catalog` back end database) is not populated beforehand with any genre, album or songs --> it is completely clean and free to be filled!*
 
