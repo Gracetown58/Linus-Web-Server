@@ -2,6 +2,7 @@
 This page explains how to set up a secure linux web server using a Digital
 Ocean droplet. This server will then be used to deploy my vinyls catalogue
 previously developed.  
+The address of the server I deployed is http://104.248.253.240/
 ## 1. Create the Digital Ocean Droplet
 1. On your local machine create RSA key pairs with the following command:  
 ```
@@ -92,7 +93,7 @@ The application I am deploying is written in python 2.7.
 $ sudo apt install python-pip  
 ```
 Check with `pip --version` that the installation was successful.  
-2. [Install and configure git](https://git-scm.com/download/linux)  
+## 6. [Install and configure git](https://git-scm.com/download/linux)  
 ```
 $ sudo add-apt-repository ppa:git-core/ppa
 $ sudo apt update
@@ -100,60 +101,134 @@ $ sudo apt-get install git
 $ git config --global user.name "username"
 $ git config --global user.email "username@mail.com"  
 ```
+You can check your settings with `git config -l`.
+## 7. PostgreSQL
+### 7.1 [Install](https://www.postgresql.org/download/linux/ubuntu/)   
+```
+$ sudo nano /etc/apt/sources.list.d/pgdg.list
+```  
+- Add `deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main`  
+- Import the repository signing key  
+```
+$ wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
+```
+- Install
+```
+$ sudo apt-get update
+$ sudo apt install postgresql-10
+```
+### 7.2 Configure:
+- Create `catalog` role for the database:
+```
+$ sudo su - postgres
+$ psql
+postgres=# CREATE ROLE catalog WITH PASSWORD 'catalog';
+postgres=# ALTER ROLE catalog CREATEDB;
+```  
+You can check with `\du` that the catalog user has been created.
+- Quit and exit: `\q `, `exit `.
+- Create catalog **user** and add to sudoers :
+```
+$ sudo adduser catalog
+$ sudo usermod -aG sudo catalog
+```
+- Log as catalog and create catalog database:
+```
+$ su - catalog
+$ createdb catalogue
+```
+You can check with `\l` that the database has been created.
 
-10. check: git config -l
-11. install postgresql
-https://www.postgresql.org/download/linux/ubuntu/   
-nano /etc/apt/sources.list.d/pgdg.list  
-add line: deb http://apt.postgresql.org/pub/repos/apt/ bionic-pgdg main  
-import repository signing key:  
-wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo apt-key add -
-sudo apt-get update  
-sudo apt install postgresql-10  
-1. configure postgresql:
-    - sudo su - postgres
-    - psql
-    - CREATE ROLE catalog WITH PASSWORD 'catalog';
-    - ALTER ROLE catalog CREATEDB;  
-    check with \du that it is been created  
-    \q  
-    exit  
-1. create catalog user and add to sudoers  
-sudo adduser catalog
-sudo usermod -aG sudo catalog
-1. create catalog db:  
-su - catalog  
-createdb catalog  
-check with \l
-1. create app directory:  
-sudo mkdir /var/www/catalog && cd /var/ww/catalog/
-1. clone repo:  
-sudo git clone https://github.com/Gry0u/vinyls_catalogue.git catalog
-1. chown -R grader:grader catalog/
-1. cd catalog/catalog
-1. mv views.py __init__.py
-1. edit  
-'# app.debug = True
-   # app.run(host='0.0.0.0', port=5000)
-    app.run()'  
-1. edit database_setup.py:  
-engine = create_engine('postgresql:///catalog:catalog@localhost/catalog',
-                       connect_args={'check_same_thread': False})
-1. add server to Google API authorized origins
-1. update client_secrets.json by downloading it, copying content and creating
-a new client_screts.json in catalog/catalog. check that the client_secret key
-is in the json file, if necessary add it manually
-1. update login.html if necessary
-1. create python virtual env  
-http://flask.pocoo.org/docs/0.12/installation/  
-sudo apt install python-virtualenv  
-in catalog/catalog/: sudo virtualenv venv  
-sudo chown -R grader:grader venv/  
-. venv/bin/activate  
-sudo pip install --upgrade flask sqlalchemy httplib2 oauth2client requests  
-sudo apt install libpq-dev  
-sudo pip install psycopg2
+## 8. Deploy application  
+### 8.1 Set up the Flask app
 
+1. Create application directory:
+```
+$ sudo mkdir /var/www/catalog && cd /var/ww/catalog/
+```
+2. Clone application repository, renaming it 'catalog':
+```
+$ sudo git clone https://github.com/Gry0u/vinyls_catalogue.git catalog
+```
+3. Rename and edit `views.py`
+Change
+```
+app.debug = True
+app.run(host='0.0.0.0', port=5000)
+```
+to
+```
+app.run()
+```
+4. Edit `database_setup.py`, change the engine creation statement to:  
+`engine = create_engine('postgresql://catalog:catalog@localhost/catalog')`
+5. Add your server's IP address to your  authorized origins in your OAuth client ID settings (I use the [Google API](https://console.developers.google.com/))
+6. Update `client_secrets.json` in catalog/catalog accordingly (dowload file, then copy paste content). Check that the client_secret key
+is in the json file.
+7. Update login.html with your CLIENT ID if necessary
+8. [Create a python virtual environment](http://flask.pocoo.org/docs/0.12/installation/ )
+```
+$ sudo apt install python-virtualenv
+```
+9. Install required modules  
+In catalog/catalog/:
+```
+$ sudo virtualenv venv  
+$ chown -R grader:grader catalog/
+$ . venv/bin/activate
+$ pip install --upgrade flask sqlalchemy httplib2 oauth2client requests  
+$ sudo apt install libpq-dev  
+$ pip install psycopg2
+```
+
+### 8.2 Set up and configure the virtualhost
+1. Create `/etc/apache2/sites-available/catalog.conf` and add the following lines:
+```
+<VirtualHost *:80>
+		ServerName your.server.ip.address
+		ServerAdmin you@mail.com
+		WSGIScriptAlias / /var/www/catalog/catalog.wsgi
+		<Directory /var/www/catalog/catalog/>
+			Order allow,deny
+			Allow from all
+		</Directory>
+		Alias /static /var/www/catalog/catalog/static
+		<Directory /var/www/catalog/catalog/static/>
+			Order allow,deny
+			Allow from all
+		</Directory>
+		ErrorLog ${APACHE_LOG_DIR}/error.log
+		LogLevel warn
+		CustomLog ${APACHE_LOG_DIR}/access.log combined
+</VirtualHost>
+```
+2. Enable the virtual host:
+```
+$ sudo a2ensite catalog
+```
+And reload as prompted
+```
+$ sudo systemctl reload apache2
+```
+### 8.3 Create the .wsgi file
+```
+$ sudo nano /var/www/catalog/catalog.wsgi
+```
+- Add the following lines:  
+```
+#!/usr/bin/python
+import sys
+import logging
+logging.basicConfig(stream=sys.stderr)
+sys.path.insert(0,"/var/www/catalog/")
+
+from catalog import app as application
+application.secret_key = 'Add your secret key'
+```
+- Restart Apache: `sudo service apache2 restart`
+
+$ sudo a2dissite 000-default.conf
+$ sudo service apache2 restart
 
 
 
