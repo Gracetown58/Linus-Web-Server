@@ -2,7 +2,7 @@
 This page explains how to set up a secure linux web server using a Digital
 Ocean droplet. This server will then be used to deploy the [vinyls catalogue](https://github.com/Gry0u/vinyls_catalogue)
 I previously developed.  
-The address of the server I deployed is **http://104.248.253.240.xip.io/**
+~~The address of the server I deployed is **http://104.248.253.240.xip.io/**~~
 ## 1. Create the Digital Ocean Droplet
 1. On your local machine create RSA key pairs with the following command:  
 ```
